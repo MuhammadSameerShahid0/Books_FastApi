@@ -58,15 +58,10 @@ FastAPI automatically generates interactive API documentation using Swagger UI.
 > > (pydevd_pycharm) install this package
 ```
 
-## 🧠 What is Pydantic 
-```bash
-> ✅ Pydantic = Validation + Parsing using Python types
-> 🧠 Used for request/response models in FastAPI
-> 🔒 Helps you catch errors early with strict type checking
-```
-
 ## 🔥 Database
 ```bash
+# Database.py (File need to Create)
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
@@ -84,4 +79,18 @@ def get_db():
 
 def create_table():
     Base.metadata.create_all(bind=engine)
+    
+# env.py in alembic folder
+
+> from Models.Books import * 
+> target_metadata = Base.metadata
+
+#alembic.ini (update the url)
+> sqlalchemy.url = postgresql://postgres:1234@localhost:5432/FastApi
+```
+## 🧠 What is Pydantic 
+```bash
+> ✅ Pydantic = Validation + Parsing using Python types
+> 🧠 Used for request/response models in FastAPI
+> 🔒 Helps you catch errors early with strict type checking
 ```
