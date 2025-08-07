@@ -1,16 +1,24 @@
-# This is a sample Python script.
+from fastapi import FastAPI, APIRouter
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+app = FastAPI()
+Test_Router = APIRouter(tags=["Test"])
+
+class Test:
+    def __init__(self, data):
+        self.data = data
+
+    def read_root(self):
+        return {"message": self.data}
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+@Test_Router.get("/read_json_hardcode")  # path and (get, post, etc. are operations)
+def read_json_hardcode():  # path operation function
+    obj = Test("Hello from class")
+    return obj.read_root()
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
+@Test_Router.get("/user_details")
+def user_details(user_name: str, user_from: str):
+    return {'user_details': {"user_name": user_name, "user_from": user_from}}
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+app.include_router(Test_Router)

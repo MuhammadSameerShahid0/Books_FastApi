@@ -27,6 +27,16 @@ uvicorn main:app --reload
 
 # 7 Install the packages from txt file
 pip install -r Books/requirements.txt
+
+# 8 Alembic Tutorial
+https://www.youtube.com/watch?v=zy8ZIAhl_fM&ab_channel=Knowbasiks
+
+# 8.1 Alembic for migrations
+alembic init alembic
+
+# 8.2 Migrations 
+alembic revision --autogenerate -m "updated lib in env"
+alembic upgrade head 
 ```
 ## 🔥 Swagger
 ```bash
