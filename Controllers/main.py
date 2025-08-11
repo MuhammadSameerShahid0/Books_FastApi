@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
-from BooksController import Books
-from StudentController import Student
+from Controllers.BooksController import Books
+from Controllers.StudentController import Student
 
 app = FastAPI()
 
