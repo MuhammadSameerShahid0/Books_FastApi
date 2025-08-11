@@ -7,12 +7,12 @@ from Database import get_db
 from Schema import StudentSchema
 
 app = FastAPI()
-Books = APIRouter(tags=["Student"])
+Student = APIRouter(tags=["Student"])
 
 
-class Student:
+class StudentController:
 
-    @Books.post("/register_student", response_model=StudentSchema.StudentResponse)
+    @Student.post("/register_student", response_model=StudentSchema.StudentResponse)
     async def register_student(
             request: StudentSchema.StudentCreate,
             db: Session = Depends(get_db)
@@ -41,7 +41,7 @@ class Student:
                 detail=str(ex)
             )
 
-    @Books.get("/student_list")
+    @Student.get("/student_list")
     async def get_student_list(db: Session = Depends(get_db)):
         try:
             db_student = db.query(Models.Student).all()
@@ -49,7 +49,7 @@ class Student:
         except Exception as ex:
             return {"Error": str(ex)}
 
-    @Books.get("/student_by_id")
+    @Student.get("/student_by_id")
     async def get_student_by_id(student_id: int, db: Session = Depends(get_db)):
         try:
             std_model = Models.Student
@@ -71,7 +71,7 @@ class Student:
                 detail=str(ex)
             )
 
-    @Books.get("/IsStudent_True")
+    @Student.get("/IsStudent_True")
     async def get_student_is_true(db: Session = Depends(get_db)):
         try:
             std_model = Models.Student
@@ -80,7 +80,7 @@ class Student:
         except Exception as ex:
             return {"error": str(ex)}
 
-    @Books.post("/Update_Student_If_IsStudent_True", response_model=StudentSchema.StudentResponse)
+    @Student.post("/Update_Student_If_IsStudent_True", response_model=StudentSchema.StudentResponse)
     async def update_student(
             student_id: int,
             request: StudentSchema.StudentUpdate,
@@ -126,7 +126,7 @@ class Student:
                 detail=str(ex)
             )
 
-    @Books.delete("/Delete_Student_By_id")
+    @Student.delete("/Delete_Student_By_id")
     async def delete_student_by_id(request: StudentSchema.StudentDelete, db: Session = Depends(get_db)):
         try:
             std_model = Models.Student
