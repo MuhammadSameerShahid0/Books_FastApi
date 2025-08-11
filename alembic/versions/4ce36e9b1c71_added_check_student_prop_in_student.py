@@ -1,8 +1,8 @@
-"""create books table
+"""added check student prop in student
 
-Revision ID: 47994dc78387
-Revises: 
-Create Date: 2025-08-08 02:07:32.000608
+Revision ID: 4ce36e9b1c71
+Revises: f65595175f44
+Create Date: 2025-08-08 22:59:17.368938
 
 """
 from typing import Sequence, Union
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '47994dc78387'
-down_revision: Union[str, Sequence[str], None] = None
+revision: str = '4ce36e9b1c71'
+down_revision: Union[str, Sequence[str], None] = 'f65595175f44'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

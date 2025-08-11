@@ -81,8 +81,9 @@ def create_table():
     Base.metadata.create_all(bind=engine)
     
 # env.py in alembic folder
-
-> from Models.Books import * 
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+(Create the another file **__init__.py** and import all lib in this class)
+> from Models import * 
 > target_metadata = Base.metadata
 
 #alembic.ini (update the url)

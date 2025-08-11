@@ -1,11 +1,19 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy.ext.associationproxy import association_proxy
+from sqlalchemy.orm import relationship
 from Database import Base
 
 class Book(Base):
-    __tablename__ = 'Book'
+    __tablename__ = 'books'
 
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String)
     description = Column(String)
     author = Column(String)
     year = Column(Integer)
+
+    # Association proxy to get students directly
+    students = association_proxy("book_students", "students")
+
+    # Relationship to association class
+    book_students = relationship("StudentBook", back_populates="book")
