@@ -8,6 +8,7 @@ from starlette import status
 from Models import StudentBook
 from Models.Books import Book as BookModel
 from Models.Student import Student as StudentModel
+from Models.Author import Author as AuthorModel
 from Database import get_db
 from Schema import BookSchema
 from Schema.BookSchema import ResponseAssignBookToStudent
@@ -26,12 +27,18 @@ class BooksController:
             ).first()
 
             if check_title is None:
-                create_book = BookModel(**request.model_dump())
+                verify_author_id = db.query(AuthorModel).filter(
+                    AuthorModel.id == request.authorid
+                ).first()
+                if verify_author_id:
+                    create_book = BookModel(**request.model_dump())
 
-                db.add(create_book)
-                db.commit()
-                db.refresh(create_book)
-                return create_book
+                    db.add(create_book)
+                    db.commit()
+                    db.refresh(create_book)
+                    return create_book
+                else:
+                    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Author not found")
             else:
                 raise HTTPException(status_code=400, detail="Book already exists")
 
