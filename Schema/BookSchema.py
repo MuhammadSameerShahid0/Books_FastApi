@@ -6,8 +6,15 @@ from pydantic import BaseModel, Json, Field
 class CreateBook(BaseModel):
     title : str
     description : str
-    author : str
+    author_id : int = Field(alias="authorId")
     year : int
+
+class ResponseCreateBook(BaseModel):
+    id : int
+    title : str
+    description : str
+    year: int
+    author_id : int
 
 class AssignBookToStudent(BaseModel):
     book_id : int

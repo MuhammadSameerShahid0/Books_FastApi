@@ -1,6 +1,5 @@
 from datetime import datetime
 from typing import Optional
-
 from fastapi import FastAPI, APIRouter, HTTPException
 from fastapi.params import Depends
 from sqlalchemy.orm import Session
@@ -8,6 +7,7 @@ from starlette import status
 from Models import StudentBook
 from Models.Books import Book as BookModel
 from Models.Student import Student as StudentModel
+from Models.Author import Author as AuthorModel
 from Database import get_db
 from Schema import BookSchema
 from Schema.BookSchema import ResponseAssignBookToStudent
@@ -18,7 +18,7 @@ Books = APIRouter(tags=["Books"])
 
 
 class BooksController:
-    @Books.post("/create_book")
+    @Books.post("/create_book", response_model=BookSchema.ResponseCreateBook)
     async def create_book(request: BookSchema.CreateBook, db: Session = Depends(get_db)):
         try:
             check_title = db.query(BookModel).filter(
@@ -26,12 +26,18 @@ class BooksController:
             ).first()
 
             if check_title is None:
-                create_book = BookModel(**request.model_dump())
+                verify_author_id = db.query(AuthorModel).filter(
+                    AuthorModel.id == request.author_id
+                ).first()
+                if verify_author_id:
+                    create_book_response = BookModel(**request.model_dump())
 
-                db.add(create_book)
-                db.commit()
-                db.refresh(create_book)
-                return create_book
+                    db.add(create_book_response)
+                    db.commit()
+                    db.refresh(create_book_response)
+                    return create_book_response
+                else:
+                    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Author not found")
             else:
                 raise HTTPException(status_code=400, detail="Book already exists")
 
@@ -190,6 +196,37 @@ class BooksController:
             code = getattr(ex, "status_code", status.HTTP_500_INTERNAL_SERVER_ERROR)
             if isinstance(ex, HTTPException):
                 raise ex
+            raise HTTPException(
+                status_code=code,
+                detail=str(ex)
+            )
+
+    @Books.get("/get_record_by_author_id")
+    def get_record_by_author_id(author_id: int, db: Session = Depends(get_db)):
+        try:
+            get_author_record = db.query(BookModel).filter(
+                BookModel.author_id == author_id,
+            ).all()
+
+            if len(get_author_record) is not 0:
+                result = []
+                for record in get_author_record:
+                    author_details = db.query(AuthorModel).filter(AuthorModel.id == author_id).first()
+                    return_record = {
+                    **record.__dict__,
+                    "Author Name": author_details.name,
+                    "Author Nationality": author_details.nationality,
+                    }
+
+                    result.append(return_record)
+                return result
+            else:
+                raise HTTPException(status_code=404, detail="Author not found")
+        except Exception as ex:
+            code = getattr(ex, "status_code", status.HTTP_500_INTERNAL_SERVER_ERROR)
+            if isinstance(ex, HTTPException):
+                raise ex
+
             raise HTTPException(
                 status_code=code,
                 detail=str(ex)
