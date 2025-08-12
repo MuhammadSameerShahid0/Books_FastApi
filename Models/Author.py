@@ -9,6 +9,7 @@ class Author(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
+    email = Column(String)
     bio = Column(String)
     nationality = Column(String)
 
