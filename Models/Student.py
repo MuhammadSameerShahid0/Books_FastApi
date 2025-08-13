@@ -20,3 +20,9 @@ class Student(Base):
 
     # Relationship to association class
     student_books = relationship("StudentBook", back_populates="student")
+
+    student_profile = relationship(
+        "StudentProfile",
+        back_populates="student",
+        uselist=False,
+        cascade="all, delete-orphan")
