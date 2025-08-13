@@ -89,7 +89,7 @@ class BooksController:
                         Student_Name=student_exists.name,
                         Student_Email=student_exists.email,
                         Book_Title=book_exists.title,
-                        Book_Author=book_exists.author,
+                        Book_Author=book_exists.author.name,
                         AssignedAt=datetime.now()
                     )
                 else:
