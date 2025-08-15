@@ -92,5 +92,6 @@ class AuthorController:
                 status_code=code,
                 detail=str(ex)
             )
-
+        finally:
+            db.close()
 
