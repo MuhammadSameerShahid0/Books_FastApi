@@ -5,3 +5,10 @@ SQLAlchemy
 psycopg2-binary
 pydantic
 alembic
+
+#Google OAuth2.0
+itsdangerous
+httpx
+authlib
+python-dotenv
+PyJWT

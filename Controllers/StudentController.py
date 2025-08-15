@@ -43,7 +43,7 @@ class StudentController:
     @Student.get("/student_list")
     async def get_student_list(db: Session = Depends(get_db)):
         try:
-            db_student = db.query(StudentModel.Student).all()
+            db_student = db.query(StudentModel).all()
             return db_student
         except Exception as ex:
             return {"Error": str(ex)}
@@ -51,7 +51,7 @@ class StudentController:
     @Student.get("/student_by_id")
     async def get_student_by_id(student_id: int, db: Session = Depends(get_db)):
         try:
-            std_model = StudentModel.Student
+            std_model = StudentModel
             std_id = db.query(std_model).filter(std_model.id == student_id).all()
             if not std_id:
                 raise HTTPException(

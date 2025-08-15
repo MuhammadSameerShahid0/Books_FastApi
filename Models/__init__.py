@@ -3,3 +3,4 @@ from .Student import Student
 from .StudentBook import StudentBook
 from .Author import Author
 from .StudentProfile import StudentProfile
+from .User import User
