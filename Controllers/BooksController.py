@@ -9,6 +9,7 @@ from Models.Books import Book as BookModel
 from Models.Student import Student as StudentModel
 from Models.Author import Author as AuthorModel
 from Database import get_db
+from OAuthandJwt.JWTToken import require_role
 from Schema import BookSchema
 from Schema.BookSchema import ResponseAssignBookToStudent
 from Schema.studentbookenum import Status
@@ -19,7 +20,8 @@ Books = APIRouter(tags=["Books"])
 
 class BooksController:
     @Books.post("/create_book", response_model=BookSchema.ResponseCreateBook)
-    async def create_book(request: BookSchema.CreateBook, db: Session = Depends(get_db)):
+    async def create_book(request: BookSchema.CreateBook, db: Session = Depends(get_db),
+                          current_user: dict = Depends(require_role(["Admin"]))):
         try:
             check_title = db.query(BookModel).filter(
                 BookModel.title == request.title
@@ -52,7 +54,9 @@ class BooksController:
             )
 
     @Books.post("/assign_book_to_student")
-    def assign_book_to_student(request: BookSchema.AssignBookToStudent, db: Session = Depends(get_db)):
+    def assign_book_to_student(request: BookSchema.AssignBookToStudent,
+                               db: Session = Depends(get_db),
+                               current_user: dict = Depends(require_role(["Admin"]))):
         try:
             book_exists = db.query(BookModel).filter(
                 BookModel.id == request.book_id, BookModel.title == request.book_title
@@ -108,7 +112,9 @@ class BooksController:
             )
 
     @Books.post("/return_book_from_student")
-    def return_book(request: BookSchema.ReturnBook, db: Session = Depends(get_db)):
+    def return_book(request: BookSchema.ReturnBook,
+                    db: Session = Depends(get_db),
+                    current_user: dict = Depends(require_role(["Admin"]))):
         try:
             get_book_id = db.query(BookModel).filter(BookModel.title == request.book_title).first()
             get_std_id = db.query(StudentModel).filter(StudentModel.email == request.student_email).first()
@@ -142,7 +148,8 @@ class BooksController:
     @Books.get("/pending_or_return_book")
     def pending_books(PendingBooks: Optional[str] = None,
                       ReturnBooks: Optional[str] = None,
-                      db: Session = Depends(get_db)):
+                      db: Session = Depends(get_db),
+                      current_user: dict = Depends(require_role(["Admin"]))):
         try:
             if PendingBooks is not None and ReturnBooks is not None:
                 raise HTTPException(
@@ -202,7 +209,8 @@ class BooksController:
             )
 
     @Books.get("/get_record_by_author_id")
-    def get_record_by_author_id(author_id: int, db: Session = Depends(get_db)):
+    def get_record_by_author_id(author_id: int, db: Session = Depends(get_db),
+                                current_user: dict = Depends(require_role(["Admin" , "Author"]))):
         try:
             get_author_record = db.query(BookModel).filter(
                 BookModel.author_id == author_id,

@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from starlette import status
 import Models.Student as StudentModel
 from Database import get_db
+from OAuthandJwt.JWTToken import require_role
 from Schema import StudentSchema
 
 app = FastAPI()
@@ -12,36 +13,8 @@ Student = APIRouter(tags=["Student"])
 
 class StudentController:
 
-    @Student.post("/register_student", response_model=StudentSchema.StudentResponse)
-    async def register_student(
-            request: StudentSchema.StudentCreate,
-            db: Session = Depends(get_db)
-    ):
-        try:
-            check_email = db.query(StudentModel).filter(StudentModel.email == request.email).first()
-            if check_email:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Email already registered"
-                )
-
-            registered_student = StudentModel(**request.model_dump())
-            db.add(registered_student)
-            db.commit()
-            db.refresh(registered_student)
-            return registered_student
-
-        except Exception as ex:
-            if isinstance(ex, HTTPException):
-                raise ex
-
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=str(ex)
-            )
-
     @Student.get("/student_list")
-    async def get_student_list(db: Session = Depends(get_db)):
+    async def get_student_list(db: Session = Depends(get_db), current_user: dict = Depends(require_role(["Admin"]))):
         try:
             db_student = db.query(StudentModel).all()
             return db_student
@@ -49,7 +22,7 @@ class StudentController:
             return {"Error": str(ex)}
 
     @Student.get("/student_by_id")
-    async def get_student_by_id(student_id: int, db: Session = Depends(get_db)):
+    async def get_student_by_id(student_id: int, db: Session = Depends(get_db), current_user: dict = Depends(require_role(["Admin" , "Student"]))):
         try:
             std_model = StudentModel
             std_id = db.query(std_model).filter(std_model.id == student_id).all()
@@ -71,18 +44,21 @@ class StudentController:
             )
 
     @Student.get("/IsStudent_True")
-    async def get_student_is_true(db: Session = Depends(get_db)):
+    async def get_student_is_true(db: Session = Depends(get_db),current_user: dict = Depends(require_role(["Admin"]))):
         try:
             is_std_true = db.query(StudentModel).filter(StudentModel.IsStudent == True).all()
             return is_std_true
         except Exception as ex:
             return {"error": str(ex)}
 
-    @Student.post("/Update_Student_If_IsStudent_True", response_model=StudentSchema.StudentResponse)
+    @Student.post("/Update_Student_If_IsStudent_True",
+                  response_model=StudentSchema.StudentResponse,
+                  )
     async def update_student(
             student_id: int,
             request: StudentSchema.StudentUpdate,
             db: Session = Depends(get_db),
+            current_user: dict = Depends(require_role(["Admin", "Student"]))
     ):
         try:
             student = db.query(StudentModel).filter(StudentModel.id == student_id, StudentModel.IsStudent == True).first()
@@ -124,7 +100,9 @@ class StudentController:
             )
 
     @Student.delete("/Delete_Student_By_id")
-    async def delete_student_by_id(request: StudentSchema.StudentDelete, db: Session = Depends(get_db)):
+    async def delete_student_by_id(request: StudentSchema.StudentDelete,
+                                   db: Session = Depends(get_db),
+                                   current_user: dict = Depends(require_role(["Admin"]))):
         try:
             errors = []
             std_id_db =  db.query(StudentModel).filter(

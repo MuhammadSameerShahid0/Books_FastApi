@@ -10,3 +10,4 @@ class User(Base):
     name = Column(String)
     picture = Column(String)
     user_created_at = Column(DateTime)
+    role = Column(String , default="Student")
