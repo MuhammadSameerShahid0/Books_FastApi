@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer
+from sqlalchemy import Column, String, Integer, Boolean
 from sqlalchemy.orm import relationship
 
 from Database import Base
@@ -12,6 +12,8 @@ class Author(Base):
     email = Column(String)
     bio = Column(String)
     nationality = Column(String)
+    secret_2fa = Column(String)
+    status_2fa = Column(Boolean)
 
     # Establish relationship
     books = relationship("Book", back_populates="author")

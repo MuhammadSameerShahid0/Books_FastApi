@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, Boolean
 from Database import Base
 
 class User(Base):
@@ -11,3 +11,5 @@ class User(Base):
     picture = Column(String)
     user_created_at = Column(DateTime)
     role = Column(String , default="Student")
+    secret_2fa = Column(String)
+    status_2fa = Column(Boolean)

@@ -23,6 +23,4 @@ def setup_google_oauth():
 
     return oauth
 
-
-# Create a global instance that can be imported
 google_oauth = setup_google_oauth()

@@ -127,3 +127,39 @@ app.add_middleware(
     secret_key=os.getenv("SECRET_KEY")
 )
 ```
+
+## 🔑 2FA Google
+```bash
+--packages--
+pyotp
+qrcode[PIL]
+Pillow
+
+def generate_2fa_secret(email: str):
+    secret = pyotp.random_base32()
+    otp_uri = pyotp.totp.TOTP(secret).provisioning_uri(name=email, issuer_name="BooksCRUD_FastApi")
+    return secret, otp_uri
+
+def generate_qrcode(opt_uri: str):
+    try:
+        qr = qrcode.make(opt_uri)
+        buffer = BytesIO()
+        qr.save(buffer, format="PNG")  # Use a string literal for the format
+        qr_buffer = buffer.getvalue()
+        response = base64.b64encode(qr_buffer).decode("utf-8")
+        return response
+    except Exception as ex:
+        return {"Error": str(ex)}
+        
+--Use this in endpoints--
+ secret, otp_uri = generate_2fa_secret(requets.email)
+qr_code = generate_qrcode(otp_uri)
+        
+---Verify Otp---
+totp = pyotp.TOTP(verify_author_email.secret_2fa)
+        if not totp.verify(otp):
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid OTP code"
+            )
+```

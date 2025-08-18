@@ -6,6 +6,7 @@ from Controllers.AuthController import AuthRouter
 from Controllers.AuthorController import Author
 from Controllers.BooksController import Books
 from Controllers.CompleteStdDetailsController import CompleteStdDetails
+from Controllers.Google2FAController import Google2FA
 from Controllers.StudentController import Student
 from Controllers.StudentProfileController import StudentProfiles
 
@@ -24,3 +25,4 @@ app.include_router(Author)
 app.include_router(StudentProfiles)
 app.include_router(CompleteStdDetails)
 app.include_router(AuthRouter)
+app.include_router(Google2FA)

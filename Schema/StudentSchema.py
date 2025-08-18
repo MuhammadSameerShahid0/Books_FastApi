@@ -14,6 +14,7 @@ class StudentResponse(BaseModel):  # For response
     email: str
     IsStudent: bool
     access_token : str
+    qr_code_2fa :str
 
     class Config:
         from_attributes = True
