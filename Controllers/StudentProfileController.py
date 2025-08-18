@@ -5,6 +5,7 @@ from starlette import status
 from Database import get_db
 from Models.Student import Student as StudentModel
 from Models.StudentProfile import StudentProfile as StudentProfileModel
+from OAuthandJwt.JWTToken import require_role
 from Schema.StudentProfileSchema import UpdateProfile
 
 app = FastAPI()
@@ -13,7 +14,8 @@ StudentProfiles = APIRouter(tags=["StudentProfile"])
 class StudentProfileController:
 
     @StudentProfiles.post("/update_Student_profile")
-    def update_student_profile(request: UpdateProfile, db: Session = Depends(get_db)):
+    def update_student_profile(request: UpdateProfile, db: Session = Depends(get_db),
+                               current_user: dict = Depends(require_role(["Admin" , "Student"]))):
         try:
             verify_student_id = db.query(StudentModel).filter(StudentModel.id == request.student_id).first()
             if verify_student_id is None:
@@ -65,7 +67,8 @@ class StudentProfileController:
             db.close()
 
     @StudentProfiles.get("/list_of_Student_profiles")
-    def get_list_of_student_profiles(db: Session = Depends(get_db)):
+    def get_list_of_student_profiles(db: Session = Depends(get_db),
+                                     current_user: dict = Depends(require_role(["Admin"]))):
         try:
             list_std_profile = db.query(StudentProfileModel).all()
             result = []
@@ -96,7 +99,8 @@ class StudentProfileController:
             db.close()
 
     @StudentProfiles.get("/student_id")
-    def get_student_id(student_id: int, db: Session = Depends(get_db)):
+    def get_student_id(student_id: int, db: Session = Depends(get_db),
+                       current_user: dict = Depends(require_role(["Admin", "Student"]))):
         try:
             result = []
             std_profile_id = db.query(StudentProfileModel).filter(StudentProfileModel.student_id == student_id).first()

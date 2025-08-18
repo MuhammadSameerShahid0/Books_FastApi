@@ -7,6 +7,7 @@ from Database import get_db
 from Models.Books import Book as BookModel
 from Models.Student import Student as StudentModel
 from Models.StudentBook import StudentBook as StudentBookModel
+from OAuthandJwt.JWTToken import require_role
 from Schema.StdDetailsSchema import StdDetailsSchema
 
 app = FastAPI()
@@ -15,7 +16,8 @@ CompleteStdDetails = APIRouter(tags=["CompleteStdDetails"])
 
 class CompleteStdDetailsController:
     @CompleteStdDetails.get("/Std_Details")
-    def std_details(student_id: int, db: Session = Depends(get_db)):
+    def std_details(student_id: int, db: Session = Depends(get_db),
+                    current_user: dict = Depends(require_role(["Admin" , "Student"]))):
         try:
             get_details = (
                 db.query(StudentBookModel)
@@ -68,7 +70,8 @@ class CompleteStdDetailsController:
     def pending_or_return(student_id: int,
                           pending: Optional[str] = None,
                           Return: Optional[str] = None,
-                          db: Session = Depends(get_db)):
+                          db: Session = Depends(get_db),
+                          current_user: dict = Depends(require_role(["Admin" , "Student"]))):
         try:
             if not (pending or Return) or (pending and Return):
                 raise HTTPException(

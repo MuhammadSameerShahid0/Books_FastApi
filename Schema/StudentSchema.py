@@ -13,6 +13,7 @@ class StudentResponse(BaseModel):  # For response
     age: int
     email: str
     IsStudent: bool
+    access_token : str
 
     class Config:
         from_attributes = True
