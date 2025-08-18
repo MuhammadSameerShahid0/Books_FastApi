@@ -14,6 +14,8 @@ class Student(Base):
     age = Column(Integer)
     email = Column(String)
     IsStudent = Column(Boolean)
+    secret_2fa = Column(String)
+    status_2fa = Column(Boolean)
 
     # Association proxy to get books directly
     books = association_proxy("student_books", "books")

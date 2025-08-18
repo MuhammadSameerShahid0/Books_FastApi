@@ -12,3 +12,8 @@ httpx
 authlib
 python-dotenv
 PyJWT
+
+#2FA with google authenticator
+pyotp
+qrcode[PIL]
+Pillow
