@@ -27,3 +27,9 @@ class StudentUpdate(BaseModel):
 class StudentDelete(BaseModel):
     id: int
     email: str
+
+class UpdateStudentResponse(BaseModel):
+    name: str
+    age: int
+    email: str
+    status_2fa: bool

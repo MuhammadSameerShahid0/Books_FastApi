@@ -6,6 +6,7 @@ import Models.Student as StudentModel
 from Database import get_db
 from OAuthandJwt.JWTToken import require_role
 from Schema import StudentSchema
+from Schema.StudentSchema import UpdateStudentResponse
 
 app = FastAPI()
 Student = APIRouter(tags=["Student"])
@@ -52,8 +53,7 @@ class StudentController:
             return {"error": str(ex)}
 
     @Student.post("/Update_Student_If_IsStudent_True",
-                  response_model=StudentSchema.StudentResponse,
-                  )
+                  response_model=UpdateStudentResponse,)
     async def update_student(
             student_id: int,
             request: StudentSchema.StudentUpdate,
