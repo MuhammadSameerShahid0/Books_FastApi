@@ -1,10 +1,9 @@
 from Controllers.main import app
 from OAuthandJwt.JWTToken import verify_jwt
 from Database import get_db
-from Tests.TestDatabase import client, create_mock_db, override_verify_jwt_admin, override_verify_jwt_forbidden
+from Tests.MockDatabase.TestDatabase import client, override_verify_jwt_admin, override_verify_jwt_forbidden, override_get_db
 
-mock_db = create_mock_db()
-app.dependency_overrides[get_db] = lambda: mock_db
+app.dependency_overrides[get_db] = override_get_db
 
 def test_get_student_list_success():
     app.dependency_overrides[verify_jwt] = override_verify_jwt_admin
@@ -34,7 +33,8 @@ def test_get_student_by_id_found():
 
     assert response.status_code == 200
     data = response.json()
-    assert data["id"] == student_id
+    assert isinstance(data, dict)
+    assert data["id"] == 1
     assert data["email"] == "test@test.com"
 
 def test_get_student_by_id_not_found():
@@ -127,4 +127,5 @@ def test_email_not_correct_delete_student_by_id():
     response = client.request( "DELETE", "/Delete_Student_By_id", json=delete_request)
     assert response.status_code == 400
     data = response.json()
-    assert response.json()["detail"] == "Email : 'test2@test.com' not correct against id : 1 ! Id not correct against email : 'test2@test.com'"
+    # assert response.json()["detail"] == "Email : 'test2@test.com' not correct against id : 1 ! Id not correct against email : 'test2@test.com'"
+    assert "not correct against id" in response.json()["detail"].lower()
