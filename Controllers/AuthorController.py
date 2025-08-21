@@ -1,11 +1,9 @@
 from fastapi import FastAPI, APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy.testing import skip_if
 from starlette import status
 from Models.Books import Book as BookModel
 from Database import get_db
 from OAuthandJwt.JWTToken import require_role
-from Schema import AuthorSchema
 from Models.Author import Author as AuthorModel
 
 app = FastAPI()

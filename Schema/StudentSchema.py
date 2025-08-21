@@ -1,4 +1,6 @@
-from pydantic import BaseModel
+from typing import Optional
+
+from pydantic import BaseModel, Field
 
 
 class StudentCreate(BaseModel): # For request
@@ -22,7 +24,7 @@ class StudentResponse(BaseModel):  # For response
 class StudentUpdate(BaseModel):
     name: str
     age: int
-    email: str
+    email: Optional[str] = Field(None, alias="new_email")
 
 class StudentDelete(BaseModel):
     id: int

@@ -15,7 +15,7 @@ Student = APIRouter(tags=["Student"])
 class StudentController:
 
     @Student.get("/student_list")
-    async def get_student_list(db: Session = Depends(get_db), current_user: dict = Depends(require_role(["Admin"]))):
+    def get_student_list(db: Session = Depends(get_db), current_user: dict = Depends(require_role(["Admin"]))):
         try:
             db_student = db.query(StudentModel).all()
             return db_student
@@ -23,10 +23,10 @@ class StudentController:
             return {"Error": str(ex)}
 
     @Student.get("/student_by_id")
-    async def get_student_by_id(student_id: int, db: Session = Depends(get_db), current_user: dict = Depends(require_role(["Admin" , "Student"]))):
+    def get_student_by_id(student_id: int, db: Session = Depends(get_db), current_user: dict = Depends(require_role(["Admin" , "Student"]))):
         try:
             std_model = StudentModel
-            std_id = db.query(std_model).filter(std_model.id == student_id).all()
+            std_id = db.query(std_model).filter(std_model.id == student_id).first()
             if not std_id:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
@@ -45,9 +45,9 @@ class StudentController:
             )
 
     @Student.get("/IsStudent_True")
-    async def get_student_is_true(db: Session = Depends(get_db),current_user: dict = Depends(require_role(["Admin"]))):
+    def get_student_is_true(db: Session = Depends(get_db),current_user: dict = Depends(require_role(["Admin"]))):
         try:
-            is_std_true = db.query(StudentModel).filter(StudentModel.IsStudent == True).all()
+            is_std_true = db.query(StudentModel).filter(StudentModel.IsStudent == "True").all()
             return is_std_true
         except Exception as ex:
             return {"error": str(ex)}
@@ -56,13 +56,20 @@ class StudentController:
                   response_model=UpdateStudentResponse,)
     async def update_student(
             student_id: int,
+            email: str,
             request: StudentSchema.StudentUpdate,
             db: Session = Depends(get_db),
             current_user: dict = Depends(require_role(["Admin", "Student"]))
     ):
         try:
-            student = db.query(StudentModel).filter(StudentModel.id == student_id, StudentModel.IsStudent == True).first()
+            student = db.query(StudentModel).filter(StudentModel.id == student_id, StudentModel.IsStudent == "True").first()
             if student:
+                if student.email != email:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Entered email does not match"
+                    )
+
                 if not request.email:
                     request.email = student.email
                 if not request.name:
@@ -71,10 +78,10 @@ class StudentController:
                     request.age = student.age
 
                 email_check = db.query(StudentModel).filter(StudentModel.email == request.email).first()
-                if student.email == email_check.email:
+                if not email_check:
                     update_data = request.model_dump(exclude_unset=True)
                     for field, value in update_data.items():
-                        setattr(student, field, value)
+                          setattr(student, field, value)
 
                     db.commit()
                     db.refresh(student)
@@ -83,7 +90,7 @@ class StudentController:
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
                         detail="Email already registered"
-                    )
+                        )
             else:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
@@ -100,7 +107,7 @@ class StudentController:
             )
 
     @Student.delete("/Delete_Student_By_id")
-    async def delete_student_by_id(request: StudentSchema.StudentDelete,
+    def delete_student_by_id(request: StudentSchema.StudentDelete,
                                    db: Session = Depends(get_db),
                                    current_user: dict = Depends(require_role(["Admin"]))):
         try:

@@ -19,7 +19,7 @@ Books = APIRouter(tags=["Books"])
 
 
 class BooksController:
-    @Books.post("/create_book", response_model=BookSchema.ResponseCreateBook)
+    @Books.post("/create_book")
     async def create_book(request: BookSchema.CreateBook, db: Session = Depends(get_db),
                           current_user: dict = Depends(require_role(["Admin"]))):
         try:
@@ -125,7 +125,7 @@ class BooksController:
             Student_Book = db.query(StudentBook).filter(
                 StudentBook.student_id == get_std_id.id,
                 StudentBook.book_id == get_book_id.id,
-                StudentBook.Status != str(Status.Return_Successfully)
+                StudentBook.Status == str(Status.Pending_for_Return)
             ).first()
 
             if Student_Book:

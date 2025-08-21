@@ -17,3 +17,7 @@ PyJWT
 pyotp
 qrcode[PIL]
 Pillow
+
+#unittest with pytest and testclient
+pytest
+httpx #(httpx is used under the hood by TestClient)
