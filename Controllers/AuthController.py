@@ -26,12 +26,19 @@ AuthRouter = APIRouter(tags=["Auth"])
 @AuthRouter.get("/register_via_google")
 async def register(request: Request):
     try:
+        # Add frontend callback URL as a parameter
+        frontend_redirect_uri = request.query_params.get("frontend_redirect_uri")
         redirect_uri = os.getenv("REDIRECT_URI")
+
         if not redirect_uri:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Redirect URI not configured"
             )
+
+        # Store frontend redirect URI in session for later use
+        request.session["frontend_redirect_uri"] = frontend_redirect_uri
+
         return await google_oauth.google.authorize_redirect(request, redirect_uri)
     except Exception as ex:
         code = getattr(ex, "status_code", status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -42,7 +49,6 @@ async def register(request: Request):
             status_code=code,
             detail=str(ex)
         )
-
 @AuthRouter.get("/callback", response_model=Token)
 async def callback(request: Request, db : Session = Depends(get_db)):
     try:
@@ -94,7 +100,15 @@ async def callback(request: Request, db : Session = Depends(get_db)):
             db.refresh(user)
 
         token = create_jwt({"email": user.email, "name" : user.name, "role": user.role, "from_project": "OAuth2.0 FastAPI"})
-        return {"access_token" : token , "token_type" : "bearer" }
+        frontend_redirect_uri = request.session.get("frontend_redirect_uri")
+        if frontend_redirect_uri:
+            # Redirect to frontend with token as query parameter
+            from fastapi.responses import RedirectResponse
+            redirect_url = f"{frontend_redirect_uri}?access_token={token}&token_type=bearer"
+            return RedirectResponse(url=redirect_url)
+        else:
+            # Fallback: return JSON response
+            return {"access_token": token, "token_type": "bearer"}
     except Exception as ex:
         code=getattr(ex, "status_code", status.HTTP_500_INTERNAL_SERVER_ERROR)
         if isinstance(ex, HTTPException):
