@@ -9,9 +9,9 @@ from fastapi.params import Depends
 from sqlalchemy.orm import Session
 from starlette import status
 from starlette.requests import Request
+from Database import get_db
 from OAuthandJwt.JWTToken import create_jwt
 from Models import User
-from Database import get_db
 from OAuthandJwt.oauth_config import google_oauth
 from Schema import StudentSchema, AuthorSchema
 from Schema.AuthSchema import Token
@@ -301,14 +301,15 @@ def login(email : str, otp: Optional[str] = None, db: Session = Depends(get_db))
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Entered details not found anywhere"
                 )
-            new_email = verify_author_email.email
-            name = verify_author_email.name
-            role = "Author"
 
             if verify_author_email.status_2fa is True:
                 totp = pyotp.TOTP(verify_author_email.secret_2fa)
                 if not totp.verify(otp):
                     raise HTTPException(status_code=400, detail="Invalid OTP code")
+
+            new_email = verify_author_email.email
+            name = verify_author_email.name
+            role = "Author"
 
         elif not get_email:
             verify_student_email = db.query(StudentModel).filter(StudentModel.email == email).first()
@@ -317,14 +318,15 @@ def login(email : str, otp: Optional[str] = None, db: Session = Depends(get_db))
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Entered details not found anywhere"
                 )
-            new_email = verify_student_email.email
-            name = verify_student_email.name
-            role = "Student"
 
             if verify_student_email.status_2fa is True:
                 totp = pyotp.TOTP(verify_student_email.secret_2fa)
                 if not totp.verify(otp):
                     raise HTTPException(status_code=400, detail="Invalid OTP code")
+
+            new_email = verify_student_email.email
+            name = verify_student_email.name
+            role = "Student"
 
         else:
             raise HTTPException(
