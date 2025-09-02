@@ -1,17 +1,17 @@
 from typing import Optional
 from fastapi import FastAPI, APIRouter, Depends
 from sqlalchemy.orm import Session
-
 from Database import get_db
-from Factory.factories import ServiceFactory
+from Factory.AbstractFactory import PostgresServiceFactory
 from Interfaces.ICompleteStdDetailsService import ICompleteStdDetailsService
 from OAuthandJwt.JWTToken import require_role
 
 app = FastAPI()
 CompleteStdDetails = APIRouter(tags=["CompleteStdDetails"])
+service_factory = PostgresServiceFactory()
 
 def get_CompleteStdDetails_service(db: Session = Depends(get_db)) -> ICompleteStdDetailsService:
-    return ServiceFactory.get_services("stddetails", db)
+    return service_factory.create_compltestddetails_service(db)
 
 CompleteStdDetails_DB_DI = Depends(get_CompleteStdDetails_service)
 

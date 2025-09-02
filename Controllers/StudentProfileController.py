@@ -2,7 +2,8 @@ from fastapi import FastAPI, APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from Database import get_db
-from Factory.factories import ServiceFactory
+from Factory.AbstractFactory import PostgresServiceFactory
+from Factory.RegistryFactory import ServiceFactory
 from Interfaces.IStudentProfileService import IStudentProfileService
 from OAuthandJwt.JWTToken import require_role
 from Schema.StudentProfileSchema import UpdateProfile
@@ -10,9 +11,10 @@ from Services.StudentProfileService import StudentProfileService
 
 app = FastAPI()
 StudentProfiles = APIRouter(tags=["StudentProfile"])
+service_factory = PostgresServiceFactory()
 
 def get_studentprofile_service(db: Session = Depends(get_db)) -> IStudentProfileService:
-    return ServiceFactory.get_services("studentprofile", db)
+    return service_factory.create_stdprofile_service(db)
 
 StudentProfile_DB_DI = Depends(get_studentprofile_service)
 
