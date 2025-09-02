@@ -3,15 +3,15 @@ from fastapi import FastAPI, APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from Database import get_db
+from Factory.factories import ServiceFactory
 from Interfaces.ICompleteStdDetailsService import ICompleteStdDetailsService
 from OAuthandJwt.JWTToken import require_role
-from Services.CompleteStdDetailsService import CompleteStdDetailsService
 
 app = FastAPI()
 CompleteStdDetails = APIRouter(tags=["CompleteStdDetails"])
 
 def get_CompleteStdDetails_service(db: Session = Depends(get_db)) -> ICompleteStdDetailsService:
-    return CompleteStdDetailsService(db)
+    return ServiceFactory.get_services("stddetails", db)
 
 CompleteStdDetails_DB_DI = Depends(get_CompleteStdDetails_service)
 

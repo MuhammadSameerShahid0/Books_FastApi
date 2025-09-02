@@ -1,20 +1,18 @@
-from fastapi import FastAPI, APIRouter, HTTPException
+from fastapi import FastAPI, APIRouter
 from fastapi.params import Depends
 from sqlalchemy.orm import Session
-from starlette import status
-import Models.Student as StudentModel
 from Database import get_db
+from Factory.factories import ServiceFactory
 from Interfaces.IStudentService import IStudentService
 from OAuthandJwt.JWTToken import require_role
 from Schema import StudentSchema
 from Schema.StudentSchema import UpdateStudentResponse
-from Services.StudentService import StudentService
 
 app = FastAPI()
 Student = APIRouter(tags=["Student"])
 
 def get_student_service(db: Session = Depends(get_db)) -> IStudentService:
-    return StudentService(db)
+    return ServiceFactory.get_services("student", db)
 
 Student_DB_DI = Depends(get_student_service)
 
@@ -29,8 +27,8 @@ class StudentController:
         return service.student_by_id(student_id)
 
     @Student.get("/IsStudent_True")
-    def get_student_is_true(student_id: int, service : IStudentService = Student_DB_DI, current_user: dict = Depends(require_role(["Admin"]))):
-        return service.student_is_true(student_id)
+    def get_student_is_true(service : IStudentService = Student_DB_DI, current_user: dict = Depends(require_role(["Admin"]))):
+        return service.student_is_true()
 
     @Student.post("/Update_Student_If_IsStudent_True",
                   response_model=UpdateStudentResponse,)

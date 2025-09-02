@@ -1,6 +1,7 @@
 from fastapi import FastAPI, APIRouter, Depends
 from sqlalchemy.orm import Session
 from Database import get_db
+from Factory.factories import ServiceFactory
 from Interfaces.IAuthorService import IAuthorService
 from OAuthandJwt.JWTToken import require_role
 from Services.AuthorService import AuthorService
@@ -9,7 +10,7 @@ app = FastAPI()
 Author = APIRouter(tags=["Author"])
 
 def get_author_service(db: Session = Depends(get_db)) -> IAuthorService:
-    return AuthorService(db)
+    return ServiceFactory.get_services("author", db)
 
 Author_Db_DI = Depends(get_author_service)
 
