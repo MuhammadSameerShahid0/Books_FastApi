@@ -39,7 +39,7 @@ class StudentService(IStudentService):
                 detail=str(ex)
             )
 
-    def student_is_true(self, student_id: int):
+    def student_is_true(self):
         try:
             is_std_true = self.db.query(StudentModel).filter(StudentModel.IsStudent == "True").all()
             return is_std_true

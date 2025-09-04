@@ -2,15 +2,18 @@ from fastapi import FastAPI, APIRouter
 from fastapi.params import Depends
 from sqlalchemy.orm import Session
 from Database import get_db
+from Factory.AbstractFactory import PostgresServiceFactory
+from Factory.RegistryFactory import ServiceFactory
 from Interfaces.IGoogle2FAService import IGoogle2FAService
 from Schema.Google2FASchema import Google2FAResponse
 from Services.Google2FAService import Google2FAService
 
 app = FastAPI()
 Google2FA = APIRouter(tags=["Google2FA"])
+service_factory = PostgresServiceFactory()
 
 def get_google2FA_service(db: Session = Depends(get_db)) -> IGoogle2FAService:
-    return Google2FAService(db)
+    return service_factory.create_google2fa_service(db)
 
 Google2FA_DB_DI = Depends(get_google2FA_service)
 

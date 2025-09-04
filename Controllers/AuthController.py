@@ -4,6 +4,8 @@ from fastapi.params import Depends
 from sqlalchemy.orm import Session
 from starlette.requests import Request
 from Database import get_db
+from Factory.AbstractFactory import PostgresServiceFactory
+from Factory.RegistryFactory import ServiceFactory
 from Interfaces.IAuthService import IAuthService
 from Schema import StudentSchema, AuthorSchema
 from Schema.AuthSchema import Token
@@ -11,10 +13,11 @@ from Services.AuthService import AuthService
 
 app = FastAPI()
 AuthRouter = APIRouter(tags=["Auth"])
+service_factory = PostgresServiceFactory()
 
 # DI provider
 def get_auth_service(db: Session = Depends(get_db)) -> IAuthService:
-    return AuthService(db)
+    return service_factory.create_auth_service(db)
 
 Auth_Db_DI = Depends(get_auth_service)
 

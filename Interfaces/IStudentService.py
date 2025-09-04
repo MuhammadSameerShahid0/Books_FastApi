@@ -15,7 +15,7 @@ class IStudentService(ABC):
         pass
 
     @abstractmethod
-    def student_is_true(self, student_id: int) -> List[StudentModel]:
+    def student_is_true(self) -> List[StudentModel]:
         pass
 
     @abstractmethod

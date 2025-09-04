@@ -3,16 +3,18 @@ from fastapi import FastAPI, APIRouter
 from fastapi.params import Depends
 from sqlalchemy.orm import Session
 from Database import get_db
+from Factory.AbstractFactory import PostgresServiceFactory
+from Factory.RegistryFactory import ServiceFactory
 from Interfaces.IBookService import IBookService
 from OAuthandJwt.JWTToken import require_role
 from Schema import BookSchema
-from Services.BookService import BookService
 
 app = FastAPI()
 Books = APIRouter(tags=["Books"])
+service_factory = PostgresServiceFactory()
 
 def get_book_service(db: Session = Depends(get_db)) -> IBookService:
-    return BookService(db)
+    return service_factory.create_book_service(db)
 
 Book_Db_DI = Depends(get_book_service)
 
