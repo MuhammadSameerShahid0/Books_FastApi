@@ -34,7 +34,7 @@ async def register_student(
         request: StudentSchema.StudentCreate,
         services : IAuthService = Auth_Db_DI,
 ):
-    return services.register_student(request)
+    return await services.register_student(request)
 
 @AuthRouter.post('/register_author_manually')
 async def register_author(requests: AuthorSchema.CreateAuthor, service : IAuthService = Auth_Db_DI):
@@ -45,5 +45,5 @@ async def google_login(email: str, otp: Optional[str] = None, service : IAuthSer
     return  await service.google_login(email, otp)
 
 @AuthRouter.get("/login", response_model=Token)
-def login(email : str, otp: Optional[str] = None, service : IAuthService = Auth_Db_DI):
-    return service.login(email, otp)
+async def login(email : str, otp: Optional[str] = None, service : IAuthService = Auth_Db_DI):
+    return await service.login(email, otp)

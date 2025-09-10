@@ -19,11 +19,13 @@ from Schema import StudentSchema, AuthorSchema
 from Schema.AuthSchema import Token
 from Schema.StudentSchema import StudentResponse
 from TwoFAgoogle.SecretandQRCode import generate_2fa_secret, generate_qrcode
+from Interfaces.IEmailService import IEmailService
 
 
 class AuthService(IAuthService):
-    def __init__(self, db: Session):
+    def __init__(self, db: Session, email_service: IEmailService):
         self.db = db
+        self.email_service = email_service
 
     #region Register
     async def google_register(self, request: Request):
@@ -240,6 +242,17 @@ class AuthService(IAuthService):
                         status_code=400,
                         detail="Invalid OTP code"
                     )
+
+                code = await self.email_service.email_code()
+
+                subject = "(EmailSent) Test from FastAPI"
+                body = await self.email_service.login_template(code, verify_email.name)
+                await self.email_service.send_email(
+                    verify_email.email,
+                    subject, 
+                    body
+                    )
+
             elif verify_email.status_2fa is False:
                 token = create_jwt({
                     "email": verify_email.email,
@@ -247,6 +260,17 @@ class AuthService(IAuthService):
                     "role": verify_email.role,
                     "from_project": "OAuth2.0 FastAPI"
                 })
+
+                code = await self.email_service.email_code()
+
+                subject = "(EmailSent) Test from FastAPI"
+                body = await self.email_service.login_template(code)
+                await self.email_service.send_email(
+                    verify_email.email,
+                    subject, 
+                    body
+                    )
+                    
                 return Token(
                     access_token=token,
                     token_type="bearer"
@@ -277,7 +301,7 @@ class AuthService(IAuthService):
                 detail=str(ex)
             )
 
-    def login(self, email: str, otp: Optional[str] = None):
+    async def login(self, email: str, otp: Optional[str] = None):
         try:
             get_email = email.endswith(f"{os.getenv('AUTHOR_EMAILS', '')}")
             if get_email:
@@ -292,6 +316,16 @@ class AuthService(IAuthService):
                     totp = pyotp.TOTP(verify_author_email.secret_2fa)
                     if not totp.verify(otp):
                         raise HTTPException(status_code=400, detail="Invalid OTP code")
+
+                code = await self.email_service.email_code()
+
+                subject = "(EmailSent) Test from FastAPI"
+                body = await self.email_service.login_template(code, verify_author_email.name)
+                await self.email_service.send_email(
+                    verify_author_email.email,
+                    subject,
+                    body
+                )
 
                 new_email = verify_author_email.email
                 name = verify_author_email.name
@@ -309,6 +343,16 @@ class AuthService(IAuthService):
                     totp = pyotp.TOTP(verify_student_email.secret_2fa)
                     if not totp.verify(otp):
                         raise HTTPException(status_code=400, detail="Invalid OTP code")
+
+                code = await self.email_service.email_code()
+
+                subject = "(EmailSent) Test from FastAPI"
+                body = await self.email_service.login_template(code, verify_student_email.name)
+                await self.email_service.send_email(
+                    verify_student_email.email,
+                    subject,
+                    body
+                )
 
                 new_email = verify_student_email.email
                 name = verify_student_email.name
