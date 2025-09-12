@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from starlette import status
 from starlette.requests import Request
 
+from FileLogging.SimpleLogging import simplelogging
 from Interfaces.IAuthService import IAuthService
 from Models.User import User as UserModel
 from Models.Student import Student as StudentModel
@@ -21,6 +22,7 @@ from Schema.StudentSchema import StudentResponse
 from TwoFAgoogle.SecretandQRCode import generate_2fa_secret, generate_qrcode
 from Interfaces.IEmailService import IEmailService
 
+logger = simplelogging("AuthService")
 
 class AuthService(IAuthService):
     def __init__(self, db: Session, email_service: IEmailService):
@@ -34,6 +36,7 @@ class AuthService(IAuthService):
             redirect_uri = os.getenv("REDIRECT_URI")
 
             if not redirect_uri:
+                logger.error("Google Redirect URI not set")
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="Redirect URI not configured"
@@ -44,6 +47,7 @@ class AuthService(IAuthService):
         except Exception as ex:
             code = getattr(ex, "status_code", status.HTTP_500_INTERNAL_SERVER_ERROR)
             if isinstance(ex, HTTPException):
+                logger.error(f"Something went wrong {ex}")
                 raise ex
 
             raise HTTPException(
@@ -87,6 +91,8 @@ class AuthService(IAuthService):
                     status_2fa=True
                 )
 
+                logger.info(f"User {user_info['sub']} created")
+
                 self.db.add(user)
                 self.db.commit()
                 self.db.refresh(user)
@@ -98,6 +104,8 @@ class AuthService(IAuthService):
                     "role": user.role,
                     "from_project": "OAuth2.0 FastAPI"
                 })
+
+            logger.info(f"Token created '{user.email}'")
 
             frontend_redirect_uri = request.session.get("frontend_redirect_uri")
             if frontend_redirect_uri:
@@ -124,6 +132,8 @@ class AuthService(IAuthService):
             secret, otp_uri = generate_2fa_secret(request.email)
             qr_code = generate_qrcode(otp_uri)
 
+            logger.info(f"Student 2FA successfully generated for '{request.email}' and secret key is '{secret}'")
+
             if check_email:
                 if check_email.secret_2fa is None:
                     check_email.secret_2fa = secret
@@ -139,12 +149,15 @@ class AuthService(IAuthService):
             self.db.commit()
             self.db.refresh(registered_student)
 
+            logger.info(f"Student created successfully '{request.email}'")
+
             token = create_jwt({
                 "email": registered_student.email,
                 "name": registered_student.name,
                 "role": "Student",
                 "from_project": "OAuth2.0 FastAPI"
             })
+            logger.info(f"Token created '{request.email}'")
 
             std_response = StudentResponse(
                 id=registered_student.id,
@@ -178,6 +191,8 @@ class AuthService(IAuthService):
             secret, otp_uri = generate_2fa_secret(request.email)
             qr_code = generate_qrcode(otp_uri)
 
+            logger.info(f"Author 2FA successfully generated for '{request.email}' and secret key is '{secret}'")
+
             verify_email_exists = self.db.query(AuthorModel).filter(AuthorModel.email == request.email).first()
             if verify_email_exists:
                 if verify_email_exists.secret_2fa is None:
@@ -194,12 +209,15 @@ class AuthService(IAuthService):
             self.db.commit()
             self.db.refresh(register_author_model)
 
+            logger.info(f"Author created successfully '{request.email}'")
+
             token = create_jwt({
                 "email": register_author_model.email,
                 "name": register_author_model.name,
                 "role": "Author",
                 "from_project": "OAuth2.0 FastAPI"
             })
+            logger.info(f"Token created '{register_author_model.email}'")
 
             response = jsonable_encoder(register_author_model)
             response.update({
@@ -243,6 +261,8 @@ class AuthService(IAuthService):
                         detail="Invalid OTP code"
                     )
 
+                logger.info(f"Google Login user verified '{verify_email.name}' with otp code {otp}")
+
                 code = await self.email_service.email_code()
 
                 subject = "(EmailSent) Test from FastAPI"
@@ -253,7 +273,10 @@ class AuthService(IAuthService):
                     body
                     )
 
+                logger.info(f"Google Login verification code '{code}' email sent successfully to '{verify_email.email}'")
+
             elif verify_email.status_2fa is False:
+                logger.info(f"Google Login user 2FA disbaled '{verify_email.name}'")
                 token = create_jwt({
                     "email": verify_email.email,
                     "name": verify_email.name,
@@ -270,7 +293,10 @@ class AuthService(IAuthService):
                     subject, 
                     body
                     )
-                    
+
+                logger.info(f"Google Login user 2FA disabled, verification code '{code}' email sent successfully to '{verify_email.email}'")
+                logger.info(f"Token created '{verify_email.email}'")
+
                 return Token(
                     access_token=token,
                     token_type="bearer"
@@ -287,11 +313,14 @@ class AuthService(IAuthService):
                 "role": verify_email.role,
                 "from_project": "OAuth2.0 FastAPI"
             })
+
+            logger.info(f"Token created '{verify_email.email}'")
             return Token(
                 access_token=token,
                 token_type="bearer"
             )
         except Exception as ex:
+            logger.error(f"Google Login unexpected error occurred {ex}")
             code = getattr(ex, "status_code", status.HTTP_500_INTERNAL_SERVER_ERROR)
             if isinstance(ex, HTTPException):
                 raise ex
@@ -317,6 +346,8 @@ class AuthService(IAuthService):
                     if not totp.verify(otp):
                         raise HTTPException(status_code=400, detail="Invalid OTP code")
 
+                logger.info(f"Author verified '{verify_author_email.name}' with otp code {otp}")
+
                 code = await self.email_service.email_code()
 
                 subject = "(EmailSent) Test from FastAPI"
@@ -326,6 +357,8 @@ class AuthService(IAuthService):
                     subject,
                     body
                 )
+
+                logger.info(f"Author Login verification code '{code}' email sent successfully to '{verify_author_email.email}'")
 
                 new_email = verify_author_email.email
                 name = verify_author_email.name
@@ -342,7 +375,10 @@ class AuthService(IAuthService):
                 if verify_student_email.status_2fa is True:
                     totp = pyotp.TOTP(verify_student_email.secret_2fa)
                     if not totp.verify(otp):
+                        logger.error(f"Student '{verify_student_email.name}' entered invalid otp code {otp}")
                         raise HTTPException(status_code=400, detail="Invalid OTP code")
+
+                logger.info(f"Student verified '{verify_student_email.name}' with otp code {otp}")
 
                 code = await self.email_service.email_code()
 
@@ -353,6 +389,7 @@ class AuthService(IAuthService):
                     subject,
                     body
                 )
+                logger.info(f"Student Login verification code '{code}' email sent successfully to '{verify_student_email.email}'")
 
                 new_email = verify_student_email.email
                 name = verify_student_email.name
@@ -369,6 +406,8 @@ class AuthService(IAuthService):
                 "name": name,
                 "role": role,
                 "from_project": "OAuth2.0 FastAPI"})
+
+            logger.info(f"Token created '{new_email}'")
 
             return Token(
                 access_token=token,

@@ -2,10 +2,12 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from starlette import status
 
+from FileLogging.SimpleLogging import simplelogging
 from Interfaces.IStudentService import IStudentService
 from Models.Student import Student as StudentModel
 from Schema import StudentSchema
 
+logger = simplelogging("StudentService")
 
 class StudentService(IStudentService):
     def __init__(self, db: Session):
@@ -14,8 +16,10 @@ class StudentService(IStudentService):
     def student_list(self):
         try:
             db_student = self.db.query(StudentModel).all()
+            logger.info("'Admin' request to get the list of students")
             return db_student
         except Exception as ex:
+            logger.error(f"Something went wrong, error details is {ex}")
             return {"Error": str(ex)}
 
     def student_by_id(self, student_id: int):
@@ -28,12 +32,14 @@ class StudentService(IStudentService):
                     detail="Student not found"
                 )
             else:
+                logger.info(f"Request Successful, to get the students details by id {student_id}")
                 return std_id
         except Exception as ex:
             code = getattr(ex, "status_code", status.HTTP_500_INTERNAL_SERVER_ERROR)
             if isinstance(ex, HTTPException):
                 raise ex
 
+            logger.error(f"Something went wrong, error code is {code} and error details is {ex}")
             raise HTTPException(
                 status_code=code,
                 detail=str(ex)
@@ -42,8 +48,10 @@ class StudentService(IStudentService):
     def student_is_true(self):
         try:
             is_std_true = self.db.query(StudentModel).filter(StudentModel.IsStudent == "True").all()
+            logger.info("'Admin' request to get the list of true students")
             return is_std_true
         except Exception as ex:
+            logger.error(f"Something went wrong, error details is {ex}")
             return {"error": str(ex)}
 
     def update_Student(self,student_id: int,
@@ -53,6 +61,7 @@ class StudentService(IStudentService):
             student = self.db.query(StudentModel).filter(StudentModel.id == student_id, StudentModel.IsStudent == "True").first()
             if student:
                 if student.email != email:
+                    logger.error(f"Entered email {email} does not match with student {student.email}")
                     raise HTTPException(
                         status_code=status.HTTP_404_NOT_FOUND,
                         detail="Entered email does not match"
@@ -73,6 +82,9 @@ class StudentService(IStudentService):
 
                     self.db.commit()
                     self.db.refresh(student)
+
+                    logger.info(f"Student '{student.name}' details updated for email {student.email}")
+
                     return student
                 else:
                     raise HTTPException(
@@ -88,6 +100,8 @@ class StudentService(IStudentService):
             code = getattr(ex, "status_code", status.HTTP_500_INTERNAL_SERVER_ERROR)
             if isinstance(ex, HTTPException):
                 raise ex
+
+            logger.error(f"Something went wrong, error code is {code} and error details is {ex}")
 
             raise HTTPException(
                 status_code=code,
@@ -117,6 +131,7 @@ class StudentService(IStudentService):
 
             errors_len = len(errors)
             if errors_len > 0:
+                logger.error(f"Admin try to delete the student but got the additional errors: {errors}")
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=str.join(" ! ", errors)
@@ -124,12 +139,16 @@ class StudentService(IStudentService):
 
             self.db.delete(std_id_db)
             self.db.commit()
+            logger.info(f"Admin deleted the student {request.email}")
+
             return f'Student deleted successfully. Id : {verify_record.id} name : {verify_record.name}'
 
         except Exception as ex:
             code = getattr(ex, "status_code", status.HTTP_500_INTERNAL_SERVER_ERROR)
             if isinstance(ex, HTTPException):
                 raise ex
+
+            logger.error(f"Something went wrong, error code is {code} and error details is {ex}")
 
             raise HTTPException(
                 status_code=code,

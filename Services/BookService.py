@@ -5,6 +5,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from starlette import status
 
+from FileLogging.SimpleLogging import simplelogging
 from Interfaces.IBookService import IBookService
 from Models.Author import Author as AuthorModel
 from Models.Books import Book as BookModel
@@ -14,6 +15,7 @@ from Models.Student import Student as StudentModel
 from Models.StudentBook import StudentBook as StudentBookModel
 from Schema.studentbookenum import Status
 
+logger = simplelogging("BookService")
 
 class BookService(IBookService):
     def __init__(self, db: Session):
@@ -35,12 +37,20 @@ class BookService(IBookService):
                     self.db.add(create_book_response)
                     self.db.commit()
                     self.db.refresh(create_book_response)
+
+                    logger.info(f"Book created successfully: {create_book_response.id}")
+
                     return create_book_response
                 else:
+
+                    logger.error(f"Book created failed {request.title}, cuz author not found")
+
                     raise HTTPException(
                         status_code=status.HTTP_404_NOT_FOUND,
                         detail="Author not found")
             else:
+                logger.error("Book already exists")
+
                 raise HTTPException(
                     status_code=400,
                     detail="Book already exists")
@@ -49,6 +59,8 @@ class BookService(IBookService):
             code = getattr(ex, "status_code", status.HTTP_500_INTERNAL_SERVER_ERROR)
             if isinstance(ex, HTTPException):
                 raise ex
+
+            logger.error(f"Something went wrong, error code is {code} and error details is {ex}")
 
             raise HTTPException(
                 status_code=code,
@@ -73,6 +85,7 @@ class BookService(IBookService):
                     ).first()
 
                     if student_book_exists:
+                        logger.info(f"Book already assigned to student '{student_exists.name}'")
                         raise HTTPException(
                             status_code=status.HTTP_400_BAD_REQUEST,
                             detail=f"Book already assigned to student '{student_exists.name}'"
@@ -87,6 +100,8 @@ class BookService(IBookService):
                     self.db.add(student_book)
                     self.db.commit()
                     self.db.refresh(student_book)
+
+                    logger.info(f"Book '{request.book_title}' assigned to student '{student_exists.name}'")
 
                     return ResponseAssignBookToStudent(
                         Student_Name=student_exists.name,
@@ -105,6 +120,9 @@ class BookService(IBookService):
             code = getattr(ex, "status_code", status.HTTP_500_INTERNAL_SERVER_ERROR)
             if isinstance(ex, HTTPException):
                 raise ex
+
+            logger.error(f"Something went wrong, error code is {code} and error details is {ex}")
+
             raise HTTPException(
                 status_code=code,
                 detail=str(ex)
@@ -124,11 +142,16 @@ class BookService(IBookService):
                 StudentBookModel.Status == str(Status.Pending_for_Return)
             ).first()
 
+            logger.info("Return book from student details verified successfully")
+
             if Student_Book:
                 Student_Book.Status = str(Status.Return_Successfully)
                 Student_Book.ReturnDate = datetime.now().today()
                 self.db.commit()
                 self.db.refresh(Student_Book)
+
+                logger.info(f"Book '{request.book_title}' returned fro student {request.student_email}")
+
                 return f"ThankYou '{get_std_id.name}' for using book '{request.book_title}'"
             else:
                 raise HTTPException(status_code=404, detail="Book already returned or details not found")
@@ -136,6 +159,9 @@ class BookService(IBookService):
             code = getattr(ex, "status_code", status.HTTP_500_INTERNAL_SERVER_ERROR)
             if isinstance(ex, HTTPException):
                 raise ex
+
+            logger.error(f"Something went wrong, error code is {code} and error details is {ex}")
+
             raise HTTPException(
                 status_code=code,
                 detail=str(ex)
@@ -167,8 +193,12 @@ class BookService(IBookService):
                         }
                         result.append(pending_book_data)
 
+                        logger.info("'Admin' tried to get the pending book, and they got the details successfully")
+
                     return result
                 else:
+                    logger.info("'Admin' tried to get the pending book details, but no pending book record not found")
+
                     raise HTTPException(status_code=404, detail="Pending Book record not found")
 
             elif ReturnBooks is not None:
@@ -187,6 +217,8 @@ class BookService(IBookService):
                         }
                         result.append(return_book_data)
 
+                        logger.info("'Admin' tried to get the return book details, and they got the details successfully")
+
                     return result
                 else:
                     raise HTTPException(status_code=404, detail="Returning Book record not found")
@@ -197,6 +229,9 @@ class BookService(IBookService):
             code = getattr(ex, "status_code", status.HTTP_500_INTERNAL_SERVER_ERROR)
             if isinstance(ex, HTTPException):
                 raise ex
+
+            logger.error(f"Something went wrong, error code is {code} and error details is {ex}")
+
             raise HTTPException(
                 status_code=code,
                 detail=str(ex)
@@ -219,6 +254,7 @@ class BookService(IBookService):
                     }
 
                     result.append(return_record)
+                    logger.info(f"Admin or Author tries to got the record '{author_id}' and they got the successfully")
                 return result
             else:
                 raise HTTPException(status_code=404, detail="Author not found")
@@ -226,6 +262,8 @@ class BookService(IBookService):
             code = getattr(ex, "status_code", status.HTTP_500_INTERNAL_SERVER_ERROR)
             if isinstance(ex, HTTPException):
                 raise ex
+
+            logger.error(f"Something went wrong, error code is {code} and error details is {ex}")
 
             raise HTTPException(
                 status_code=code,

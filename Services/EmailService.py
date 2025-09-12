@@ -5,9 +5,13 @@ import string
 from datetime import datetime
 from fastapi import HTTPException
 from starlette import status
+
+from FileLogging.SimpleLogging import simplelogging
 from Interfaces.IEmailService import IEmailService
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+
+logger = simplelogging("EmailService")
 
 FROM_ADDRESS = os.getenv("FROM_ADDRESS")
 SMPT_SERVER = os.getenv("SMPT_SERVER")
@@ -36,11 +40,15 @@ class EmailService(IEmailService):
             server.send_message(msg)
             server.quit()
 
+            logger.info(f"Verification code Email sent successfully to {user_email}")
+
             return f"Email sent successfully to {user_email}"
         except Exception as ex:
             code = getattr(ex, "status_code", status.HTTP_500_INTERNAL_SERVER_ERROR)
             if isinstance(ex, HTTPException):
                 raise ex
+
+            logger.error(f"Something went wrong, error code is {code} and error details is {ex}")
 
             raise HTTPException(
                 status_code=code,
