@@ -2,11 +2,13 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from starlette import status
 
+from FileLogging.SimpleLogging import simplelogging
 from Interfaces.IStudentProfileService import IStudentProfileService
 from Models.StudentProfile import StudentProfile as StudentProfileModel
 from Models.Student import Student as StudentModel
 from Schema.StudentProfileSchema import UpdateProfile
 
+logger = simplelogging("StudentProfileService")
 
 class StudentProfileService(IStudentProfileService):
     def __init__(self, db : Session):

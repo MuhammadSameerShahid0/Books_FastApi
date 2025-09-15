@@ -2,15 +2,19 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from starlette import status
 
+from FileLogging.SimpleLogging import simplelogging
 from Interfaces.IAuthorService import IAuthorService
 from Models.Author import Author as AuthorModel
 from Models.Books import Book as BookModel
+
+logger = simplelogging("AuthorService")
 
 class AuthorService(IAuthorService):
     def __init__(self, db: Session):
         self.db = db
 
     async def author_list(self):
+        logger.info(f"'Admin' tries to getting the author list and they successfully got the author list")
         return self.db.query(AuthorModel).all()
 
     def author_list_and_books(self):
@@ -28,6 +32,7 @@ class AuthorService(IAuthorService):
                     }
 
                     result.append(result_record)
+                    logger.info(f"Author list with book successfully returned")
 
                 return result
             else:
@@ -37,6 +42,8 @@ class AuthorService(IAuthorService):
             code = getattr(500, "status_code", status.HTTP_500_INTERNAL_SERVER_ERROR)
             if isinstance(ex, HTTPException):
                 raise ex
+
+            logger.error(f"Something went wrong, error code is {code} and error details is {ex}")
 
             raise HTTPException(
                 status_code=code,
@@ -49,6 +56,7 @@ class AuthorService(IAuthorService):
             if verify_id:
                 self.db.delete(verify_id)
                 self.db.commit()
+                logger.info(f"'Admin', deleted the Author {author_id} successfully")
                 return f"Author '{verify_id.name}' deleted"
             else:
                 raise HTTPException(status_code=404, detail="Author not found")
@@ -56,6 +64,7 @@ class AuthorService(IAuthorService):
             code = getattr(ex, "status_code", status.HTTP_500_INTERNAL_SERVER_ERROR)
             if isinstance(ex, HTTPException):
                 raise ex
+            logger.error(f"Something went wrong, error code is {code} and error details is {ex}")
 
             raise HTTPException(
                 status_code=code,

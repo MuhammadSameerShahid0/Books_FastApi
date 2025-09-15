@@ -3,12 +3,14 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session, joinedload
 from starlette import status
 
+from FileLogging.SimpleLogging import simplelogging
 from Interfaces.ICompleteStdDetailsService import ICompleteStdDetailsService
 from Models.StudentBook import StudentBook as StudentBookModel
 from Models.Books import Book as BookModel
 from Models.Student import Student as StudentModel
 from Schema.StdDetailsSchema import StdDetailsSchema
 
+logger = simplelogging("CompleteStdDetailsService")
 
 class CompleteStdDetailsService(ICompleteStdDetailsService):
     def __init__(self, db: Session):
@@ -29,6 +31,7 @@ class CompleteStdDetailsService(ICompleteStdDetailsService):
             )
             result = []
             if get_details:
+                logger.info(f"Student details found for id {student_id}")
                 for detail in get_details:
                     result_data = StdDetailsSchema(
                         Name=detail.student.name if detail.student else None,
@@ -48,6 +51,9 @@ class CompleteStdDetailsService(ICompleteStdDetailsService):
                         Author_Nationality=detail.book.author.nationality if detail.book.author else None
                     )
                     result.append(result_data)
+
+                    logger.info(f"Successfully get complete student details for student {detail.student.name}")
+
                 return result
             else:
                 raise HTTPException(status_code=404, detail="Student not found")
@@ -55,6 +61,8 @@ class CompleteStdDetailsService(ICompleteStdDetailsService):
             code = getattr(ex, "status_code", status.HTTP_500_INTERNAL_SERVER_ERROR)
             if isinstance(ex, HTTPException):
                 raise ex
+
+            logger.error(f"Something went wrong, error code is {code} and error details is {ex}")
 
             raise HTTPException(
                 status_code=code,
@@ -111,12 +119,17 @@ class CompleteStdDetailsService(ICompleteStdDetailsService):
                     Author_Nationality=detail.book.author.nationality if detail.book.author else None
                 )
                 result.append(result_data)
+
+                logger.info(f"Successfully get the detail of {status_filter} student {student_id}")
+
             return result
 
         except Exception as ex:
             code = getattr(ex, "status_code", status.HTTP_500_INTERNAL_SERVER_ERROR)
             if isinstance(ex, HTTPException):
                 raise ex
+
+            logger.error(f"Something went wrong, error code is {code} and error details is {ex}")
 
             raise HTTPException(
                 status_code=code,
